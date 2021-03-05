@@ -1,0 +1,14 @@
+[Unit]
+Description=Server
+After=network.target
+
+[Service]
+User=hoel
+Group=hoel
+WorkingDirectory=/opt/server
+ExecStart=/opt/server/server.py
+Restart=on-failure
+RestartSec=10
+
+[Install]
+WantedBy=multi-user.target

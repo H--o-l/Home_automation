@@ -1,0 +1,5 @@
+---
+
+- hosts: frite
+  roles:
+    - server

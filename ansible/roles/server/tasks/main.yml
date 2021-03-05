@@ -1,0 +1,62 @@
+---
+
+- name: Install dep
+  apt:
+    name:
+      - build-essential
+      - libffi-dev
+      - python3-dev
+      - python3-pip
+      - silversearcher-ag  # just for dev
+      - rsync  # for ansible
+  become: true
+
+- name: Install aiohttp
+  pip:
+    executable: pip3
+    extra_args: --user
+    name: aiohttp[speedups]
+
+- name: Create server directory
+  file:
+    path: /opt/server/
+    state: directory
+    owner: hoel
+    mode: 0700
+  become: true
+
+- name: Sync server files
+  synchronize:
+    src: '~/git/Home_automation/server/'
+    dest: '/opt/server'
+    rsync_opts:
+      - "--exclude=*.pyc"
+    checksum: true  # not needed but logic
+  notify:
+    - Restart server
+
+- name: Create systemd service
+  template:
+    src: etc/systemd/system/server.service
+    dest: /etc/systemd/system/server.service
+  become: true
+  tags: [conf]
+  notify:
+    - Reload systemd files
+    - Restart server
+
+- name: Enable and start server
+  service:
+    name: server
+    enabled: true
+    state: started
+  become: true
+
+- name: Check server API
+  uri:
+    url: 'http://{{ inventory_hostname }}:6000/'
+    status_code: [200]
+  register: result
+  until: result.status == 200
+  retries: 10
+  delay: 2
